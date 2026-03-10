@@ -6,6 +6,7 @@ import SignupPage from './pages/SignupPage';
 import PostListPage from './pages/PostListPage';
 import PostDetailPage from './pages/PostDetailPage';
 import PostWritePage from './pages/PostWritePage';
+import PostEditPage from './pages/PostEditPage';
 import SavedPostsPage from './pages/SavedPostsPage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
@@ -40,6 +41,7 @@ function App() {
           {/* 게시물 */}
           <Route path='/post/:id' element={<PostDetailPage />} />
           <Route path='/write' element={<PostWritePage />} />
+          <Route path='/post/:id/edit' element={<PostEditPage />} />
 
           {/* 저장한 게시물 */}
           <Route path='/saved' element={<SavedPostsPage />} />

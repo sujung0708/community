@@ -10,6 +10,11 @@ import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Grid';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 import { useParams, useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VerifiedIcon from '@mui/icons-material/Verified';
@@ -18,10 +23,13 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ReplayIcon from '@mui/icons-material/Replay';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Header from '../components/common/Header';
 import PhotoGallery from '../components/post/PhotoGallery';
 import CommentSection from '../components/post/CommentSection';
-import { mockPosts, mockComments, currentUser } from '../data/mock-data';
+import { usePosts } from '../context/PostsContext';
+import { mockComments, currentUser } from '../data/mock-data';
 
 /**
  * PostDetailPage 컴포넌트 (게시물 상세 페이지)
@@ -34,13 +42,26 @@ import { mockPosts, mockComments, currentUser } from '../data/mock-data';
 function PostDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const post = mockPosts.find((p) => p.id === Number(id));
+
+  /** Context에서 posts 전체 목록과 deletePost 함수를 가져옴 */
+  const { posts, deletePost } = usePosts();
+
+  /**
+   * useParams의 id는 문자열이므로 Number()로 변환 후 비교
+   * mock 게시물: id 1,2,3 (number)
+   * 새 게시물:   id Date.now() (number → PostWritePage에서 이미 number로 생성)
+   */
+  const post = posts.find((p) => p.id === Number(id));
 
   const [isRevisit, setIsRevisit] = useState(false);
   const [revisitCount, setRevisitCount] = useState(post?.revisit_count ?? 0);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(post?.bookmark_count ?? 0);
 
+  /** 삭제 확인 다이얼로그 열림 여부 */
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  /** 게시물을 찾지 못한 경우 */
   if (!post) {
     return (
       <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: '#FFF8F4' }}>
@@ -52,6 +73,9 @@ function PostDetailPage() {
       </Box>
     );
   }
+
+  /** 현재 로그인 사용자가 이 게시물의 작성자인지 확인 */
+  const isOwner = post.user_id === currentUser.id;
 
   const postComments = mockComments.filter((c) => c.post_id === post.id);
 
@@ -69,6 +93,12 @@ function PostDetailPage() {
     });
   };
 
+  /** 삭제 확정 - Context에서 제거 후 목록으로 이동 */
+  const handleDeleteConfirm = () => {
+    deletePost(post.id);
+    navigate('/');
+  };
+
   const verificationLabel = post.verification_type === 'receipt' ? '영수증 인증' : '위치 인증';
   const VerificationIcon = post.verification_type === 'receipt' ? ReceiptLongIcon : LocationOnIcon;
 
@@ -77,14 +107,51 @@ function PostDetailPage() {
       <Header userName={currentUser.name} />
 
       <Container maxWidth='md' sx={{ py: { xs: 2, md: 4 }, px: { xs: 2, md: 3 } }}>
-        {/* 뒤로가기 */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <IconButton onClick={() => navigate('/')} size='small' sx={{ color: '#8B5E3C' }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant='caption' sx={{ color: '#8B5E3C', fontWeight: 600 }}>
-            목록으로
-          </Typography>
+
+        {/* 뒤로가기 + 작성자 전용 수정/삭제 버튼 */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton onClick={() => navigate('/')} size='small' sx={{ color: '#8B5E3C' }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant='caption' sx={{ color: '#8B5E3C', fontWeight: 600 }}>
+              목록으로
+            </Typography>
+          </Box>
+
+          {/* 본인 게시물일 때만 수정/삭제 버튼 노출 */}
+          {isOwner && (
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size='small'
+                variant='outlined'
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/post/${post.id}/edit`)}
+                sx={{
+                  borderColor: '#D65A31',
+                  color: '#D65A31',
+                  fontWeight: 700,
+                  '&:hover': { borderColor: '#C44536', bgcolor: 'rgba(214,90,49,0.05)' },
+                }}
+              >
+                수정
+              </Button>
+              <Button
+                size='small'
+                variant='outlined'
+                startIcon={<DeleteIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
+                sx={{
+                  borderColor: '#baa08a',
+                  color: '#8B5E3C',
+                  fontWeight: 700,
+                  '&:hover': { borderColor: '#C44536', color: '#C44536', bgcolor: 'rgba(196,69,54,0.05)' },
+                }}
+              >
+                삭제
+              </Button>
+            </Box>
+          )}
         </Box>
 
         {/* 인증 요약 박스 */}
@@ -227,6 +294,40 @@ function PostDetailPage() {
         {/* 댓글 섹션 */}
         <CommentSection comments={postComments} currentUserName={currentUser.name} />
       </Container>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{ sx: { borderRadius: 2, p: 0.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#3E2A1E' }}>
+          게시물 삭제
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#8B5E3C' }}>
+            <Box component='span' sx={{ fontWeight: 700, color: '#3E2A1E' }}>
+              &quot;{ post.store_name }&quot;
+            </Box>{' '}
+            후기를 삭제하시겠습니까?<br />삭제한 게시물은 복구할 수 없습니다.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 2.5, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{ color: '#8B5E3C', fontWeight: 700 }}
+          >
+            취소
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant='contained'
+            sx={{ bgcolor: '#C44536', '&:hover': { bgcolor: '#a33020' }, fontWeight: 700 }}
+          >
+            삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
