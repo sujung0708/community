@@ -6,7 +6,7 @@ import PostDetailPage from './pages/PostDetailPage';
 
 function App() {
   return (
-    <BrowserRouter basename='/SJAIWEB'>
+    <BrowserRouter basename='/community'>
       <Routes>
         <Route path='/login' element={<LoginPage />} />
         <Route path='/' element={<PostListPage />} />
