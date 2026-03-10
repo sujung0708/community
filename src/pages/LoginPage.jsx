@@ -22,11 +22,13 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  /** 이메일 로그인 처리 - 성공 시 메인 페이지로 이동 */
   const handleEmailLogin = (e) => {
     e.preventDefault();
     navigate('/');
   };
 
+  /** 소셜 로그인 처리 - 성공 시 메인 페이지로 이동 */
   const handleSocialLogin = (provider) => {
     console.log(`${provider} 로그인 시도`);
     navigate('/');
@@ -109,7 +111,7 @@ function LoginPage() {
             </Typography>
           </Divider>
 
-          {/* 이메일 로그인 */}
+          {/* 이메일 로그인 폼 */}
           <Box component='form' onSubmit={handleEmailLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <TextField
               fullWidth
@@ -157,6 +159,26 @@ function LoginPage() {
             >
               로그인
             </Button>
+          </Box>
+
+          {/* 회원가입 링크 */}
+          <Box sx={{ textAlign: 'center', mt: 2.5 }}>
+            <Typography variant='body2' sx={{ color: '#8B5E3C' }}>
+              아직 계정이 없으신가요?{' '}
+              <Box
+                component='span'
+                onClick={() => navigate('/signup')}
+                sx={{
+                  color: '#D65A31',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  '&:hover': { color: '#C44536' },
+                }}
+              >
+                회원가입
+              </Box>
+            </Typography>
           </Box>
         </Paper>
       </Container>

@@ -111,4 +111,12 @@ export const mockComments = [
 ];
 
 /** 현재 로그인된 사용자 (목 데이터) */
-export const currentUser = { id: 1, name: '김먹방', signup_type: 'kakao' };
+export const currentUser = {
+  id: 1,
+  name: '김먹방',
+  email: 'mukbang@example.com',
+  signup_type: 'kakao',
+  profile_image_url: null,
+  /** 내가 저장(북마크)한 게시물 ID 목록 */
+  savedPostIds: [1, 3],
+};
