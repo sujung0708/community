@@ -10,10 +10,11 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Header from '../components/common/Header';
 import PostCard from '../components/ui/PostCard';
-import { mockPosts, currentUser } from '../data/mock-data';
+import { usePosts } from '../context/PostsContext';
+import { currentUser } from '../data/mock-data';
 
 /**
- * PostListPage 컴포넌트 (게시물 목록 페이지)
+ * PostListPage 컴포넌트 (게시물 목록 페이지 / 메인 허브)
  *
  * Props: 없음
  *
@@ -24,11 +25,14 @@ function PostListPage() {
   const [certifiedOnly, setCertifiedOnly] = useState(false);
   const [sortBy, setSortBy] = useState('latest');
 
+  /** Context에서 게시물 목록을 가져옴 - addPost 호출 시 자동으로 최신 목록 반영 */
+  const { posts } = usePosts();
+
   const handleCertifiedToggle = (_, value) => {
     if (value !== null) setCertifiedOnly(value === 'certified');
   };
 
-  const filteredPosts = mockPosts
+  const filteredPosts = posts
     .filter((post) => (certifiedOnly ? post.verification_type : true))
     .sort((a, b) => {
       if (sortBy === 'popular') return b.revisit_count - a.revisit_count;

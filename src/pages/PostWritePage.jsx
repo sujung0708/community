@@ -16,6 +16,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import CloseIcon from '@mui/icons-material/Close';
 import Header from '../components/common/Header';
 import { useNavigate } from 'react-router-dom';
+import { usePosts } from '../context/PostsContext';
 import { currentUser } from '../data/mock-data';
 
 /**
@@ -28,6 +29,9 @@ import { currentUser } from '../data/mock-data';
  */
 function PostWritePage() {
   const navigate = useNavigate();
+
+  /** Context에서 addPost 함수를 가져옴 */
+  const { addPost } = usePosts();
 
   /** 폼 입력 상태 */
   const [form, setForm] = useState({
@@ -75,15 +79,43 @@ function PostWritePage() {
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  /** 작성 완료 - 메인 페이지로 이동 */
+  /** 작성 완료 - 새 게시물을 Context에 추가 후 메인 페이지로 이동 */
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.store_name || !form.visit_date || !form.summary_text) {
       alert('가게명, 방문일, 한줄평은 필수 입력 항목입니다.');
       return;
     }
-    console.log('작성 데이터:', { ...form, images: previewImages });
-    alert('게시물이 등록되었습니다!');
+
+    /** 새 게시물 객체 생성 (DB 구조와 동일한 형태) */
+    const newPost = {
+      id: Date.now(),
+      user_id: currentUser.id,
+      user_name: currentUser.name,
+      store_name: form.store_name,
+      summary_text: form.summary_text,
+      content: form.content,
+      visit_date: form.visit_date,
+      verification_type: form.verification_type,
+      menu_text: form.menu_text,
+      price_text: form.price_text,
+      atmosphere_text: form.atmosphere_text,
+      final_comment: form.final_comment,
+      is_revisit: false,
+      revisit_count: 0,
+      bookmark_count: 0,
+      /** 선택한 사진을 이미지 배열 형태로 변환 */
+      images: previewImages.map((url, idx) => ({
+        id: Date.now() + idx,
+        image_url: url,
+        sort_order: idx + 1,
+        is_thumbnail: idx === 0,
+      })),
+      created_at: new Date().toISOString(),
+    };
+
+    /** Context의 addPost 호출 → PostListPage 즉시 반영 */
+    addPost(newPost);
     navigate('/');
   };
 
